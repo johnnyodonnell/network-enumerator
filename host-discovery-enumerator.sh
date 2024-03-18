@@ -1,21 +1,21 @@
 #!/bin/bash
 
-HOSTS=$1
+TARGET=$1
 
 
 ### Ping scans ################################################################
 
-sudo nmap -sn $HOSTS # Ping scan (ARP ping)
-nmap -sn $HOSTS # Ping scan (TCP Connect)
-sudo nmap -sn -PE -PP -PM $HOSTS # Ping scan (Timestamp and address mask)
+sudo nmap -sn $TARGET # Ping scan (ARP ping)
+nmap -sn $TARGET # Ping scan (TCP Connect)
+sudo nmap -sn -PE -PP -PM $TARGET # Ping scan (Timestamp and address mask)
 
 ### No ping, top ports ########################################################
 
-sudo nmap -Pn $HOSTS
-sudo nmap -Pn -sA -p- $HOSTS # TCP ACK
+sudo nmap -Pn $TARGET
+sudo nmap -Pn -sA -p- $TARGET # TCP ACK
 
 ### No ping, all ports ########################################################
 
-sudo nmap -Pn -p- $HOSTS
-sudo nmap -Pn -sA -p- $HOSTS # TCP ACK
+sudo nmap -Pn -p- $TARGET
+sudo nmap -Pn -sA -p- $TARGET # TCP ACK
 
