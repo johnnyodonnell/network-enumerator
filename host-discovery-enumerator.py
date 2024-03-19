@@ -4,9 +4,15 @@ import sys
 
 commands = [
         {
-            "name": "Ping Scans",
+            "name": "Basic Ping Scans",
             "commands": [
-                "-sn -PE -PP -PM",
+                "-sn -PE -PP", # Including timestamp '-PP' because it is included in the default nmap host discovery phase
+                ],
+            },
+        {
+            "name": "Special Ping Scans",
+            "commands": [
+                "-sn -PM",
                 ],
             },
         {
@@ -107,7 +113,7 @@ def run(target, index = 1):
 def main():
     print_commands()
     target = sys.argv[1]
-    index = 1 if (len(sys.argv) <= 2) else sys.argv[2]
+    index = 1 if (len(sys.argv) <= 2) else int(sys.argv[2])
     run(target, index)
 
 if __name__ == "__main__":
