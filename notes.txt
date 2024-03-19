@@ -1,0 +1,10 @@
+
+* Running multiple instances of `nmap` at once:
+    - Whenever I run multiple instances of `nmap` at once, all scans run
+        significantly slower, and I'm never sure why. This note lists
+        possible answers.
+    - https://stackoverflow.com/a/24994879
+    - https://nmap.org/book/reduce-scantime.html
+        * "Five or ten Nmap processes are fine, but launching 100 Nmap
+            processes at once is not recommended."
+

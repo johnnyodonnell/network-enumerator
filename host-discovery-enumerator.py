@@ -93,6 +93,7 @@ def get_full_name(index, name):
     return str(index) + ". " + name
 
 def print_commands():
+    print("Scan Types")
     for i in range (0, len(commands)):
         command_set = commands[i]
         print(get_full_name(i + 1, command_set["name"]))
