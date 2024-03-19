@@ -96,7 +96,7 @@ def print_commands():
 def run(target, index = 1):
     for i in range(index - 1, len(commands)):
         command_set = commands[i]
-        print("Now running: " + get_full_name(i + 1, command_set["name"]))
+        print("-- Now running: " + get_full_name(i + 1, command_set["name"]) + "---")
         for command in command_set["commands"]:
             subprocess.run(["sudo", "nmap", target])
 
