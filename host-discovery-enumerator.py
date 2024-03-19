@@ -4,15 +4,9 @@ import sys
 
 commands = [
         {
-            "name": "Basic Ping Scans",
+            "name": "Ping Scans",
             "commands": [
-                "-sn -PE -PP", # Including timestamp '-PP' because it is included in the default nmap host discovery phase
-                ],
-            },
-        {
-            "name": "Special Ping Scans",
-            "commands": [
-                "-sn -PM",
+                "-sn -PE -PP -PM",
                 ],
             },
         {
