@@ -257,26 +257,20 @@ def get_stage_name(index, action):
     return str(index) + "-" + get_function_name(action)
 
 def determine_action(current_state):
-    actions_left = []
+    actions_complete = {}
 
-    if (not "stage" in current_state):
-        actions_left = action_order
-    else:
+    if "stage" in current_state:
         stage = current_state["stage"]
-        stage_status = current_state["stage_status"]
-        start_appending = False
         for i, action in enumerate(action_order):
-            if start_appending:
-                actions_left.append(action)
             if get_stage_name(i, action) == stage:
-                start_appending = True
-                if stage_status == "in-progress":
-                    actions_left.append(action)
+                break
+            actions_complete[action] = True
 
-    for i, action in enumerate(actions_left):
-        stage_init(current_state, get_stage_name(i, action))
-        action(current_state)
-        stage_complete(current_state)
+    for i, action in enumerate(action_order):
+        if (not action in actions_complete) or (not actions_complete[action]):
+            stage_init(current_state, get_stage_name(i, action))
+            action(current_state)
+            stage_complete(current_state)
 
     print("Enumeration complete.")
 
