@@ -85,9 +85,9 @@ def stage_complete(current_state):
     current_state["stage_status"] = "done"
     save_state(current_state)
 
-def run_scan(args, target):
+def run_scan(args, target, output_filename, current_state):
     command = [
-            "sudo", "nmap",
+            "sudo", "nmap", "-v",
             # This is to ensure that groups can be completed quickly,
             # but this should ultimately be configurable.
             # See more: https://nmap.org/book/man-performance.html
@@ -101,12 +101,14 @@ def run_scan(args, target):
     else:
         command.append(target)
     subprocess.run(command)
+    copy_output_to_state(output_filename, current_state)
 
 def should_resume_scan(output_filename):
     return os.path.isfile(output_filename)
 
-def resume_scan(output_filename, target):
+def resume_scan(output_filename, target, current_state):
     subprocess.run(["sudo", "nmap", "--resume", output_filename])
+    copy_output_to_state(output_filename, current_state)
 
 def process_host(host_map, host):
     address = host.find("address").get("addr")
@@ -183,7 +185,6 @@ def get_active_hosts(current_state):
     return active_hosts
 
 def service_detection(current_state):
-    stage_init(current_state, get_function_name(service_detection))
     output_filename = "service_detection.xml"
     hosts = current_state["hosts"]
     for address in hosts:
@@ -191,60 +192,56 @@ def service_detection(current_state):
         ports = get_open_nonfingerprinted_ports(host)
         if len(ports) > 0:
             run_scan(
-                    ["-Pn", "-sV", "-p" format_ports(ports), "-oX", output_filename],
-                    address)
-            copy_output_to_state(output_filename, current_state)
+                    ["-Pn", "-sV", "-p", format_ports(ports), "-oX", output_filename],
+                    address,
+                    output_filename,
+                    current_state)
             mark_ports_as_fingerprinted(host)
             save_state(current_state)
-    stage_complete(current_state)
 
 def scan_all_ports(current_state):
-    stage_init(current_state, get_function_name(scan_all_ports))
     output_filename = "all_ports.xml"
     if should_resume_scan(output_filename):
-        resume_scan(output_filename, current_state["target"])
+        resume_scan(output_filename, current_state["target"], current_state)
     else:
         run_scan(
                 ["-Pn", "-p", get_remaining_ports(), "-oX", output_filename],
-                get_active_hosts(current_state))
-    copy_output_to_state(output_filename, current_state)
-    stage_complete(current_state)
+                get_active_hosts(current_state),
+                output_filename,
+                current_state)
 
 def scan_top_100_ports(current_state):
-    stage_init(current_state, get_function_name(scan_top_100_ports))
     output_filename = "top_100_ports.xml"
     if should_resume_scan(output_filename):
-        resume_scan(output_filename, current_state["target"])
+        resume_scan(output_filename, current_state["target"], current_state)
     else:
         run_scan(
                 ["-Pn", "-p", format_ports(top_100_ports), "-oX", output_filename],
-                get_active_hosts(current_state))
-    copy_output_to_state(output_filename, current_state)
-    stage_complete(current_state)
+                get_active_hosts(current_state),
+                output_filename,
+                current_state)
 
 def scan_top_10_ports(current_state):
-    stage_init(current_state, get_function_name(scan_top_10_ports))
     output_filename = "top_10_ports.xml"
     if should_resume_scan(output_filename):
-        resume_scan(output_filename, current_state["target"])
+        resume_scan(output_filename, current_state["target"], current_state)
     else:
         run_scan(
                 ["-Pn", "-p", format_ports(top_10_ports), "-oX", output_filename],
-                get_active_hosts(current_state))
-    copy_output_to_state(output_filename, current_state)
-    stage_complete(current_state)
+                get_active_hosts(current_state),
+                output_filename,
+                current_state)
 
 def scan_top_2_ports(current_state):
-    stage_init(current_state, get_function_name(scan_top_2_ports))
     output_filename = "top_2_ports.xml"
     if should_resume_scan(output_filename):
-        resume_scan(output_filename, current_state["target"])
+        resume_scan(output_filename, current_state["target"], current_state)
     else:
         run_scan(
                 ["-p", format_ports(top_2_ports), "-oX", output_filename],
-                current_state["target"])
-    copy_output_to_state(output_filename, current_state)
-    stage_complete(current_state)
+                current_state["target"],
+                output_filename,
+                current_state)
 
 
 action_order = [
@@ -256,6 +253,9 @@ action_order = [
         service_detection,
         ]
 
+def get_stage_name(index, action):
+    return str(index) + "-" + get_function_name(action)
+
 def determine_action(current_state):
     actions_left = []
 
@@ -265,16 +265,18 @@ def determine_action(current_state):
         stage = current_state["stage"]
         stage_status = current_state["stage_status"]
         start_appending = False
-        for action in action_order:
+        for i, action in enumerate(action_order):
             if start_appending:
                 actions_left.append(action)
-            if get_function_name(action) == stage:
+            if get_stage_name(i, action) == stage:
                 start_appending = True
                 if stage_status == "in-progress":
                     actions_left.append(action)
 
-    for action in actions_left:
-        action()
+    for i, action in enumerate(actions_left):
+        stage_init(current_state, get_stage_name(i, action))
+        action(current_state)
+        stage_complete(current_state)
 
     print("Enumeration complete.")
 
