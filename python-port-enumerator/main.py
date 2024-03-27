@@ -23,7 +23,15 @@ import xml.etree.ElementTree as ET
 # Top ports are based on my own experience
 top_2_ports = [80, 443]
 top_10_ports = [21, 22, 445, 3306, 5432, 6379, 8080, 8443]
+# Top ports based on nmap's recommendation
+top_100_ports = [7, 9, 13, 23, 25, 26, 37, 53, 79, 81, 88, 106, 110, 111, 113, 119, 135, 139, 143, 144, 179, 199, 389, 427, 444, 465, 513, 514, 515, 543, 544, 548, 554, 587, 631, 646, 873, 990, 993, 995, 1025, 1026, 1027, 1028, 1029, 1110, 1433, 1720, 1723, 1755, 1900, 2000, 2001, 2049, 2121, 2717, 3000, 3128, 3389, 3986, 4899, 5000, 5009, 5051, 5060, 5101, 5190, 5357, 5631, 5666, 5800, 5900, 6000, 6001, 6646, 7070, 8000, 8008, 8009, 8081, 8888, 9100, 9999, 10000, 32768, 49152, 49153, 49154, 49155, 49156]
+
 state_file_name = "current_state.json"
+
+# From https://stackoverflow.com/q/5067604
+def get_function_name(func):
+    # Sounds like this could be deprecated at some point
+    return func.__name__
 
 def format_ports(ports):
     return ",".join([str(port) for port in ports])
@@ -143,7 +151,7 @@ def copy_output_to_state(output_filename, current_state):
             process_host(host_map, host)
     save_state(current_state)
 
-def get_open_ports(host):
+def get_open_nonfingerprinted_ports(host):
     open_ports = []
     if "ports" in host:
         ports = host["ports"]
@@ -151,9 +159,18 @@ def get_open_ports(host):
             tcp_ports = ports["tcp"]
             for portid in tcp_ports:
                 port = tcp_ports[portid]
-                if ("state" in port) and (port["state"] == "open"):
+                if ("state" in port) and (port["state"] == "open") and (not "fingerprinted" in port):
                     open_ports.append(portid)
     return open_ports
+
+def mark_ports_as_fingerprinted(host):
+    if "ports" in host:
+        ports = host["ports"]
+        if "tcp" in ports:
+            tcp_ports = ports["tcp"]
+            for portid in tcp_ports:
+                port = tcp_ports[portid]
+                port["fingerprinted"] = True
 
 def get_active_hosts(current_state):
     active_hosts = []
@@ -166,22 +183,23 @@ def get_active_hosts(current_state):
     return active_hosts
 
 def service_detection(current_state):
-    stage_init(current_state, "service_detection")
+    stage_init(current_state, get_function_name(service_detection))
     output_filename = "service_detection.xml"
     hosts = current_state["hosts"]
     for address in hosts:
         host = hosts[address]
-        if not "fingerprinted" in host:
+        ports = get_open_nonfingerprinted_ports(host)
+        if len(ports) > 0:
             run_scan(
-                    ["-Pn", "-sV", "-p" format_ports(get_open_ports(host)), "-oX", output_filename],
+                    ["-Pn", "-sV", "-p" format_ports(ports), "-oX", output_filename],
                     address)
             copy_output_to_state(output_filename, current_state)
-            host["fingerprinted"] = True
+            mark_ports_as_fingerprinted(host)
             save_state(current_state)
     stage_complete(current_state)
 
 def scan_all_ports(current_state):
-    stage_init(current_state, "all_ports")
+    stage_init(current_state, get_function_name(scan_all_ports))
     output_filename = "all_ports.xml"
     if should_resume_scan(output_filename):
         resume_scan(output_filename, current_state["target"])
@@ -192,8 +210,20 @@ def scan_all_ports(current_state):
     copy_output_to_state(output_filename, current_state)
     stage_complete(current_state)
 
+def scan_top_100_ports(current_state):
+    stage_init(current_state, get_function_name(scan_top_100_ports))
+    output_filename = "top_100_ports.xml"
+    if should_resume_scan(output_filename):
+        resume_scan(output_filename, current_state["target"])
+    else:
+        run_scan(
+                ["-Pn", "-p", format_ports(top_100_ports), "-oX", output_filename],
+                get_active_hosts(current_state))
+    copy_output_to_state(output_filename, current_state)
+    stage_complete(current_state)
+
 def scan_top_10_ports(current_state):
-    stage_init(current_state, "top_10_ports")
+    stage_init(current_state, get_function_name(scan_top_10_ports))
     output_filename = "top_10_ports.xml"
     if should_resume_scan(output_filename):
         resume_scan(output_filename, current_state["target"])
@@ -205,7 +235,7 @@ def scan_top_10_ports(current_state):
     stage_complete(current_state)
 
 def scan_top_2_ports(current_state):
-    stage_init(current_state, "top_2_ports")
+    stage_init(current_state, get_function_name(scan_top_2_ports))
     output_filename = "top_2_ports.xml"
     if should_resume_scan(output_filename):
         resume_scan(output_filename, current_state["target"])
@@ -216,18 +246,38 @@ def scan_top_2_ports(current_state):
     copy_output_to_state(output_filename, current_state)
     stage_complete(current_state)
 
-def determine_action(current_state):
-    if (not "stage" in current_state) or ((current_state["stage"] == "top_2_ports") and (current_state["stage_status"] == "in-progress")):
-        scan_top_2_ports(current_state)
-    elif (current_state["stage"] == "top_2_ports") or ((current_state["stage"] == "top_10_ports") and (current_state["stage_status"] == "in-progress")):
-        scan_top_10_ports(current_state)
-    elif (current_state["stage"] == "top_10_ports") or ((current_state["stage"] == "all_ports") and (current_state["stage_status"] == "in-progress")):
-        scan_all_ports(current_state)
-    else:
-        print("Enumeration complete.")
-        return
 
-    determine_action(current_state)
+action_order = [
+        scan_top_2_ports,
+        scan_top_10_ports,
+        scan_top_100_ports,
+        service_detection,
+        scan_all_ports,
+        service_detection,
+        ]
+
+def determine_action(current_state):
+    actions_left = []
+
+    if (not "stage" in current_state):
+        actions_left = action_order
+    else:
+        stage = current_state["stage"]
+        stage_status = current_state["stage_status"]
+        start_appending = False
+        for action in action_order:
+            if start_appending:
+                actions_left.append(action)
+            if get_function_name(action) == stage:
+                start_appending = True
+                if stage_status == "in-progress":
+                    actions_left.append(action)
+
+    for action in actions_left:
+        action()
+
+    print("Enumeration complete.")
+
 
 def main():
     current_state = read_state()
