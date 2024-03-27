@@ -39,7 +39,7 @@ def format_ports(ports):
 def get_remaining_ports():
     ports_remaining = []
 
-    ports_seen = top_2_ports + top_10_ports
+    ports_seen = top_2_ports + top_10_ports + top_100_ports
     ports_seen_map = {}
     for port in ports_seen:
         ports_seen_map[port] = True
