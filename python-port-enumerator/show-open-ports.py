@@ -7,6 +7,24 @@ def num_of_ports(host):
 def get_port_id(port):
     return int(port["id"])
 
+def get_num_of_hosts_not_fingerprinted(hosts):
+    num_of_hosts = 0
+
+    for address in hosts:
+        host = hosts[address]
+        if ("status" in host) and (host["status"] == "up") and ("ports" in host):
+            ports = host["ports"]
+            if "tcp" in ports:
+                tcp_ports = ports["tcp"]
+                for portid in tcp_ports:
+                    port = tcp_ports[portid]
+                    if ("state" in port) and (port["state"] == "open") and (not "fingerprinted" in port):
+                        num_of_hosts += 1
+                        break
+
+    return num_of_hosts
+
+
 def main():
     current_state = {}
     with open("current_state.json") as f:
@@ -52,6 +70,7 @@ def main():
         print("")
 
     print("Total hosts: " + str(len(host_list)))
+    print("Hosts not fingerprinted: " + str(get_num_of_hosts_not_fingerprinted(hosts)))
 
 main()
 
