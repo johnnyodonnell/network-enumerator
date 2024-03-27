@@ -7,8 +7,7 @@ import xml.etree.ElementTree as ET
 
 
 # This script should ultimately perform a few important functions
-# 1. Execute a basic host discovery phase
-# 2. Scan for the top 2 ports on each known host
+# 1. Execute a basic host discovery phase # 2. Scan for the top 2 ports on each known host
 # 3. Scan for the top 10 ports on each known host
 # 4. Scan for the top 100 ports on each known host
 # 5. Scan for the top 1000 ports on each known host
@@ -131,12 +130,12 @@ def process_host(host_map, host):
             if not portid in host_map[address]["ports"]["tcp"]:
                 host_map[address]["ports"]["tcp"][portid] = {}
             state = port.find("state")
-            if state:
+            if state is not None:
                 state = state.get("state")
                 if state:
                     host_map[address]["ports"]["tcp"][portid]["state"] = state
             service = port.find("service")
-            if service:
+            if service is not None:
                 service_info = {
                         "name": service.get("name"),
                         "product": service.get("product"),
