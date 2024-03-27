@@ -128,11 +128,21 @@ def process_host(host_map, host):
             host_map[address]["ports"]["tcp"] = {}
         for port in ports:
             portid = port.get("portid")
-            state = port.find("state").get("state")
             if not portid in host_map[address]["ports"]["tcp"]:
                 host_map[address]["ports"]["tcp"][portid] = {}
+            state = port.find("state")
             if state:
-                host_map[address]["ports"]["tcp"][portid]["state"] = state
+                state = state.get("state")
+                if state:
+                    host_map[address]["ports"]["tcp"][portid]["state"] = state
+            service = port.find("service")
+            if service:
+                service_info = {
+                        "name": service.get("name"),
+                        "product": service.get("product"),
+                        "version": service.get("version"),
+                        }
+                host_map[address]["ports"]["tcp"][portid]["service"] = service_info
 
 def copy_output_to_state(output_filename, current_state):
     if not "hosts" in current_state:
