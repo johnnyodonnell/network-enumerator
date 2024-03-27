@@ -51,5 +51,7 @@ def main():
             print(f'{portid:<7}{name:<15}{product:<10}{version:<10}')
         print("")
 
+    print("Total hosts: " + str(len(host_list)))
+
 main()
 
