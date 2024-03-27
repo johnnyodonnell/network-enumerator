@@ -181,7 +181,7 @@ def mark_ports_as_fingerprinted(host):
             tcp_ports = ports["tcp"]
             for portid in tcp_ports:
                 port = tcp_ports[portid]
-                if ("state" in port) and (port["state"] == "open")
+                if ("state" in port) and (port["state"] == "open"):
                     port["fingerprinted"] = True
 
 def get_active_hosts(current_state):
