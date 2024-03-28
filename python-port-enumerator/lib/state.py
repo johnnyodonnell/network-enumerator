@@ -17,4 +17,3 @@ def save_state(current_state):
     with open (state_file_name, "w") as f:
         json.dump(current_state, f)
 
-
