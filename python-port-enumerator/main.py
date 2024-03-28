@@ -1,9 +1,10 @@
-import json
 import os
 import re
 import sys
 import subprocess
 import xml.etree.ElementTree as ET
+
+from lib.state import read_state, save_state
 
 
 # This script should ultimately perform a few important functions
@@ -25,7 +26,6 @@ top_10_ports = [21, 22, 445, 3306, 5432, 6379, 8080, 8443]
 # Top ports based on nmap's recommendation
 top_100_ports = [7, 9, 13, 23, 25, 26, 37, 53, 79, 81, 88, 106, 110, 111, 113, 119, 135, 139, 143, 144, 179, 199, 389, 427, 444, 465, 513, 514, 515, 543, 544, 548, 554, 587, 631, 646, 873, 990, 993, 995, 1025, 1026, 1027, 1028, 1029, 1110, 1433, 1720, 1723, 1755, 1900, 2000, 2001, 2049, 2121, 2717, 3000, 3128, 3389, 3986, 4899, 5000, 5009, 5051, 5060, 5101, 5190, 5357, 5631, 5666, 5800, 5900, 6000, 6001, 6646, 7070, 8000, 8008, 8009, 8081, 8888, 9100, 9999, 10000, 32768, 49152, 49153, 49154, 49155, 49156]
 
-state_file_name = "current_state.json"
 
 # From https://stackoverflow.com/q/5067604
 def get_function_name(func):
@@ -62,19 +62,6 @@ def get_remaining_ports():
 
     return format_ports(ports_remaining)
 
-def read_state():
-    current_state = {}
-    if os.path.isfile(state_file_name):
-        with open(state_file_name) as f:
-            current_state = json.load(f)
-    else:
-        save_state(current_state)
-    return current_state
-
-def save_state(current_state):
-    with open (state_file_name, "w") as f:
-        json.dump(current_state, f)
-
 def stage_init(current_state, state_name):
     current_state["stage"] = state_name
     current_state["stage_status"] = "in-progress"
@@ -87,10 +74,6 @@ def stage_complete(current_state):
 def run_scan(args, target, output_filename, current_state):
     command = [
             "sudo", "nmap", "-v",
-            # This is to ensure that groups can be completed quickly,
-            # but this should ultimately be configurable.
-            # See more: https://nmap.org/book/man-performance.html
-            "--max-hostgroup", "4"
             ]
     command += args
     if type(target) is list:
@@ -215,7 +198,11 @@ def scan_all_ports(current_state):
         resume_scan(output_filename, current_state["target"], current_state)
     else:
         run_scan(
-                ["-Pn", "-p", get_remaining_ports(), "-oX", output_filename],
+                [
+                    "-Pn", "-p", get_remaining_ports(),
+                    "-oX", output_filename,
+                    "--max-hostgroup", "4"
+                    ],
                 get_active_hosts(current_state),
                 output_filename,
                 current_state)
@@ -226,7 +213,11 @@ def scan_top_100_ports(current_state):
         resume_scan(output_filename, current_state["target"], current_state)
     else:
         run_scan(
-                ["-Pn", "-p", format_ports(top_100_ports), "-oX", output_filename],
+                [
+                    "-Pn", "-p", format_ports(top_100_ports),
+                    "-oX", output_filename,
+                    "--max-hostgroup", "32"
+                    ],
                 get_active_hosts(current_state),
                 output_filename,
                 current_state)
