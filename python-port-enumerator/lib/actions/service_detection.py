@@ -92,5 +92,5 @@ def service_detection(current_state):
             mark_ports_as_fingerprinted(host)
             save_state(current_state)
             service_detection(current_state)
-            break
+            return
 
