@@ -40,11 +40,8 @@ def mark_hosts_as_fingerprinted(current_state, portid, hosts_set):
                     if portid in tcp_ports:
                         tcp_ports[portid]["fingerprinted"] = True
 
-def service_detection(current_state):
-    open_ports_map = {}
+def get_host_with_most_open_ports(hosts):
     host_with_most_open_ports = None
-
-    hosts = current_state["hosts"]
     for address in hosts:
         host = hosts[address]
         ports = get_open_nonfingerprinted_ports(host)
@@ -52,7 +49,17 @@ def service_detection(current_state):
         if num_of_open_ports > 0:
             if (host_with_most_open_ports is None) or (num_of_open_ports > len(host_with_most_open_ports["ports"])):
                 host_with_most_open_ports = {"address": address, "ports": ports}
+    return host_with_most_open_ports
 
+def service_detection(current_state):
+    open_ports_map = {}
+
+    hosts = current_state["hosts"]
+    for address in hosts:
+        host = hosts[address]
+        ports = get_open_nonfingerprinted_ports(host)
+        num_of_open_ports = len(ports)
+        if num_of_open_ports > 0:
             for port in ports:
                 if not port in open_ports_map:
                     open_ports_map[port] = {address}
@@ -63,8 +70,9 @@ def service_detection(current_state):
     for portid in open_ports_map:
         open_ports_list.append({"port": portid, "hosts": open_ports_map[portid]})
 
-    sorted(open_ports_list, key=get_number_of_hosts, reverse=True)
+    open_ports_list = sorted(open_ports_list, key=get_number_of_hosts, reverse=True)
     for port_map_entry in open_ports_list:
+        host_with_most_open_ports = get_host_with_most_open_ports(current_state["hosts"])
         portid = port_map_entry["port"]
         hosts = port_map_entry["hosts"]
         if len(hosts) >= len(host_with_most_open_ports["ports"]):
