@@ -12,7 +12,6 @@ def scan_top_100_ports(current_state):
                 [
                     "-Pn", "-p", format_ports(top_100_ports),
                     "-oX", output_filename,
-                    "--max-hostgroup", "32"
                     ],
                 get_active_hosts(current_state),
                 output_filename,
