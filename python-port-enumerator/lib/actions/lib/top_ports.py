@@ -9,7 +9,7 @@ def determine_port_representation(left_port, right_port):
         return str(left_port) + "-" + str(right_port)
 
 def flatten_ports(ports):
-    flatten_ports = []
+    flattened_ports = []
 
     left_port = None
     right_port = None
@@ -34,7 +34,7 @@ def filter_ports(base_array, ports_to_filter):
     for port in base_array:
         if not port in ports_to_filter:
             filtered_array.append(port)
-    return format_ports(flattend_ports(filtered_array))
+    return format_ports(flatten_ports(filtered_array))
 
 def get_top_2_ports():
     return format_ports(top_2_ports)
