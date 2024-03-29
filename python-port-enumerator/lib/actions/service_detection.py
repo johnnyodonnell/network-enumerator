@@ -1,5 +1,5 @@
 from lib.actions.lib.scan import run_scan, should_resume_scan, resume_scan
-from lib.actions.lib.utils import format_ports
+from lib.actions.lib.top_ports import format_ports
 from lib.state import save_state
 
 
