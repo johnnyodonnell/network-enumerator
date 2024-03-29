@@ -1,7 +1,4 @@
 
-def format_ports(ports):
-    return ",".join([str(port) for port in ports])
-
 def get_active_hosts(current_state):
     active_hosts = []
     if "hosts" in current_state:
