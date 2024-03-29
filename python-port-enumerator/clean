@@ -1,9 +1,7 @@
 #!/bin/bash
 
 sudo rm current_state.json
-sudo rm top_2_ports.xml
-sudo rm top_10_ports.xml
-sudo rm top_100_ports.xml
+sudo rm top_*_ports.xml
 sudo rm all_ports.xml
 sudo rm service_detection*.xml
 
