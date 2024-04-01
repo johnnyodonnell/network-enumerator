@@ -9,6 +9,7 @@ from lib.state import save_state
 def run_scan(args, target, output_filename, current_state):
     command = [
             "sudo", "nmap", "-v",
+            "--max-scan-delay", "5ms", "--max-retries", "1",
             ]
     command += args
     if type(target) is list:
