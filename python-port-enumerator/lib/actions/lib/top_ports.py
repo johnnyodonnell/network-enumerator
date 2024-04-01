@@ -17,7 +17,7 @@ def flatten_ports(ports):
         if left_port is None:
             left_port = port
             right_port = port
-        elif port == (right_port - 1):
+        elif port == (right_port + 1):
             right_port = port
         else:
             flattened_ports.append(
