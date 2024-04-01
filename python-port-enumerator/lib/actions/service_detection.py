@@ -97,7 +97,7 @@ def service_detection(current_state):
                      address,
                      output_filename,
                      current_state)
-            mark_ports_as_fingerprinted(host)
+            mark_ports_as_fingerprinted(current_state["hosts"][address])
             save_state(current_state)
             service_detection(current_state)
             return
