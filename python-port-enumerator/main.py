@@ -51,18 +51,20 @@ def get_stage_name(index, action):
     return str(index) + "-" + get_function_name(action)
 
 def determine_action(current_state):
-    actions_complete = {}
+    stages_complete = {}
 
     if "stage" in current_state:
-        stage = current_state["stage"]
+        current_stage = current_state["stage"]
         for i, action in enumerate(action_order):
-            if get_stage_name(i, action) == stage:
+            stage = get_stage_name(i, action)
+            if stage == current_stage:
                 break
-            actions_complete[action] = True
+            stages_complete[stage] = True
 
     for i, action in enumerate(action_order):
-        if (not action in actions_complete) or (not actions_complete[action]):
-            stage_init(current_state, get_stage_name(i, action))
+        stage = get_stage_name(i, action)
+        if (not stage in stages_complete) or (not stages_complete[stage]):
+            stage_init(current_state, stage)
             action(current_state)
             stage_complete(current_state)
 
