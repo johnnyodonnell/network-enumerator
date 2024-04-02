@@ -3,7 +3,8 @@ from lib.actions.lib.top_ports import format_ports
 from lib.state import save_state
 
 
-def get_number_of_hosts(port_map_entry): return len(port_map_entry["hosts"])
+def get_number_of_hosts(port_map_entry):
+    return len(port_map_entry["hosts"])
 
 def get_open_nonfingerprinted_ports(host):
     open_ports = []
@@ -75,24 +76,26 @@ def service_detection(current_state):
         portid = port_map_entry["port"]
         hosts = port_map_entry["hosts"]
         if len(hosts) >= len(host_with_most_open_ports["ports"]):
-            output_file_basename = "service_detection_" + portid
+            output_filename = "service_detection_" + portid + ".xml"
             run_scan([
                 "-Pn", "-sV", "-p",  portid,
+                "-oX", output_filename,
                 ],
                      list(hosts), # Convert from set to list
-                     output_file_basename,
+                     output_filename,
                      current_state)
             mark_hosts_as_fingerprinted(current_state, portid, hosts)
             save_state(current_state)
         else:
             address = host_with_most_open_ports["address"]
             ports = host_with_most_open_ports["ports"]
-            output_file_basename = "service_detection_" + address
+            output_filename = "service_detection_" + address + ".xml"
             run_scan([
                 "-Pn", "-sV", "-p",  format_ports(ports),
+                "-oX", output_filename,
                 ],
                      address,
-                     output_file_basename,
+                     output_filename,
                      current_state)
             mark_ports_as_fingerprinted(current_state["hosts"][address])
             save_state(current_state)

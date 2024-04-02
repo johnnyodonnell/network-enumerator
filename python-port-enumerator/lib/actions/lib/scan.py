@@ -6,18 +6,10 @@ import xml.etree.ElementTree as ET
 from lib.state import save_state
 
 
-def xml_filename(file_basename):
-    return file_basename + ".xml"
-
-def normal_filename(file_basename):
-    return file_basename + ".nmap"
-
-def run_scan(args, target, output_file_basename, current_state):
+def run_scan(args, target, output_filename, current_state):
     command = [
             "sudo", "nmap", "-v",
             "--max-scan-delay", "5ms", "--max-retries", "1",
-            "-oX", xml_filename(output_file_basename),
-            "-oN", normal_filename(output_file_basename),
             ]
     command += args
     if type(target) is list:
@@ -27,20 +19,14 @@ def run_scan(args, target, output_file_basename, current_state):
     else:
         command.append(target)
     subprocess.run(command)
-    copy_output_to_state(output_file_basename, current_state)
+    copy_output_to_state(output_filename, current_state)
 
-def should_resume_scan(output_file_basename):
-    return os.path.isfile(normal_filename(output_file_basename))
+def should_resume_scan(output_filename):
+    return os.path.isfile(output_filename)
 
-# According to the following article, scans can't be resumed with XML:
-# https://nmap.org/book/output-formats-commandline-flags.html
-# And according to the next article, scans can be resumed with XML:
-# https://nmap.org/book/man-output.html
-# I have found scan resuming with XML to be faulty
-# More on this: https://security.stackexchange.com/a/107312
-def resume_scan(output_file_basename, target, current_state):
-    subprocess.run(["sudo", "nmap", "--resume", normal_filename(output_file_basename)])
-    copy_output_to_state(output_file_basename, current_state)
+def resume_scan(output_filename, target, current_state):
+    subprocess.run(["sudo", "nmap", "--resume", output_filename])
+    copy_output_to_state(output_filename, current_state)
 
 def process_host(host_map, host):
     address = host.find("address").get("addr")
@@ -76,20 +62,16 @@ def process_host(host_map, host):
                         }
                 host_map[address]["ports"]["tcp"][portid]["service"] = service_info
 
-def copy_output_to_state(output_file_basename, current_state):
+def copy_output_to_state(output_filename, current_state):
     if not "hosts" in current_state:
         current_state["hosts"] = {}
 
     host_map = current_state["hosts"]
-    with open(xml_filename(output_file_basename)) as f:
+    with open(output_filename) as f:
         raw = f.read()
-
         # Handle bug with how nmap adds `</nmaprun>` tags
-        # Edit: this bug may not be relevant now that scans are
-        # resumed with '.nmap' files instead of '.xml' files
         xml = re.sub(r"</nmaprun>", "", raw)
         xml += "</nmaprun>"
-
         tree = ET.fromstring(xml)
         hosthints = tree.findall("hosthint")
         for hosthint in hosthints:

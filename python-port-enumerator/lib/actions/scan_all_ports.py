@@ -4,16 +4,17 @@ from lib.actions.lib.utils import get_active_hosts
 
 
 def scan_all_ports(current_state):
-    output_file_basename = "all_ports"
-    if should_resume_scan(output_file_basename):
-        resume_scan(output_file_basename, current_state["target"], current_state)
+    output_filename = "all_ports.xml"
+    if should_resume_scan(output_filename):
+        resume_scan(output_filename, current_state["target"], current_state)
     else:
         run_scan(
                 [
                     "-Pn", "-p", get_remaining_ports(),
+                    "-oX", output_filename,
                     "--max-hostgroup", "4"
                     ],
                 get_active_hosts(current_state),
-                output_file_basename,
+                output_filename,
                 current_state)
 
