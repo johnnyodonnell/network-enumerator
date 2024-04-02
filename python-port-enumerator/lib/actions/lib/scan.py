@@ -37,6 +37,7 @@ def should_resume_scan(output_file_basename):
 # And according to the next article, scans can be resumed with XML:
 # https://nmap.org/book/man-output.html
 # I have found scan resuming with XML to be faulty
+# More on this: https://security.stackexchange.com/a/107312
 def resume_scan(output_file_basename, target, current_state):
     subprocess.run(["sudo", "nmap", "--resume", normal_filename(output_file_basename)])
     copy_output_to_state(output_file_basename, current_state)
@@ -82,9 +83,13 @@ def copy_output_to_state(output_file_basename, current_state):
     host_map = current_state["hosts"]
     with open(xml_filename(output_file_basename)) as f:
         raw = f.read()
+
         # Handle bug with how nmap adds `</nmaprun>` tags
+        # Edit: this bug may not be relevant now that scans are
+        # resumed with '.nmap' files instead of '.xml' files
         xml = re.sub(r"</nmaprun>", "", raw)
         xml += "</nmaprun>"
+
         tree = ET.fromstring(xml)
         hosthints = tree.findall("hosthint")
         for hosthint in hosthints:
