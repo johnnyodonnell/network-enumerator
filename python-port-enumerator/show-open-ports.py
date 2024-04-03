@@ -30,12 +30,17 @@ def main():
     with open("current_state.json") as f:
         current_state = json.load(f)
 
+    stage = current_state["stage"]
     host_list = []
+    hosts_with_current_stage_complete = 0
 
     hosts = current_state["hosts"]
     for address in hosts:
         host = hosts[address]
         if ("status" in host) and (host["status"] == "up") and ("ports" in host):
+            if ("stages_complete" in host) and (stage in host["stages_complete"]) and (host["stages_complete"][stage]):
+                hosts_with_current_stage_complete += 1
+
             host_map = {}
             host_list.append(host_map)
             host_map["address"] = address
@@ -71,6 +76,8 @@ def main():
 
     print("Total hosts: " + str(len(host_list)))
     print("Hosts not fingerprinted: " + str(get_num_of_hosts_not_fingerprinted(hosts)))
+    print("Current stage: " + stage)
+    print("Hosts with current stage complete: " + str(hosts_with_current_stage_complete))
 
 main()
 

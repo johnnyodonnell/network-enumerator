@@ -33,6 +33,7 @@ class ReadOutputThread(threading.Thread):
                 copy_output_to_state(self.output_filename, self.current_state)
             time.sleep(5)
         copy_output_to_state(self.output_filename, self.current_state)
+        print("Scan output processed")
 
 
 def run_scan(args, target, output_filename, current_state):
