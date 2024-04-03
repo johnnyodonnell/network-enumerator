@@ -1,3 +1,7 @@
 
-1. Group hosts by port so that service detection can be done in bulk
+Todo:
+    1. -
+
+Done:
+    - Group hosts by port so that service detection can be done in bulk
 
