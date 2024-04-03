@@ -21,14 +21,7 @@ def run_scan(args, target, output_filename, current_state):
     subprocess.run(command)
     copy_output_to_state(output_filename, current_state)
 
-def should_resume_scan(output_filename):
-    return os.path.isfile(output_filename)
-
-def resume_scan(output_filename, target, current_state):
-    subprocess.run(["sudo", "nmap", "--resume", output_filename])
-    copy_output_to_state(output_filename, current_state)
-
-def process_host(host_map, host):
+def process_host(current_stage, host_map, host):
     address = host.find("address").get("addr")
 
     state = host.find("status").get("state")
@@ -36,6 +29,10 @@ def process_host(host_map, host):
         if not address in host_map:
             host_map[address] = {}
         host_map[address]["status"] = "up"
+
+        if not "stages_complete" in host_map[address]:
+            host_map[address]["stages_complete"] = {}
+        host_map[address]["stages_complete"][current_stage] = True
 
     ports = host.find("ports")
     if ports is not None:
@@ -75,9 +72,9 @@ def copy_output_to_state(output_filename, current_state):
         tree = ET.fromstring(xml)
         hosthints = tree.findall("hosthint")
         for hosthint in hosthints:
-            process_host(host_map, hosthint)
+            process_host("hosthint", host_map, hosthint)
         hosts = tree.findall("host")
         for host in hosts:
-            process_host(host_map, host)
+            process_host(current_state["stage"], host_map, host)
     save_state(current_state)
 
