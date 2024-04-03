@@ -30,7 +30,11 @@ class ReadOutputThread(threading.Thread):
     def run(self):
         while not self.stopped():
             if os.path.isfile(self.output_filename):
-                copy_output_to_state(self.output_filename, self.current_state)
+                try:
+                    copy_output_to_state(self.output_filename, self.current_state)
+                except Exception as e:
+                    print("Error copying output to state")
+                    print(e)
             time.sleep(5)
         copy_output_to_state(self.output_filename, self.current_state)
         print("Scan output processed")
