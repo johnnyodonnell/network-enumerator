@@ -16,7 +16,9 @@ class ReadOutputThread(threading.Thread):
     regularly for the stopped() condition."""
 
     def __init__(self, output_filename, current_state):
-        super(ReadOutputThread, self).__init__()
+        # https://stackoverflow.com/a/11816038
+        super(ReadOutputThread, self).__init__(daemon=True)
+
         self.output_filename = output_filename
         self.current_state = current_state
         self._stop_event = threading.Event()
